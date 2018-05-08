@@ -14,6 +14,8 @@ defmodule Soap.Request do
     headers = Params.build_headers(wsdl, operation, headers)
     body = Params.build_body(wsdl, operation, params)
 
-    HTTPoison.post(url, body, headers)
+    HTTPoison.post(url, body, headers, http_opts())
   end
+
+  defp http_opts, do: Application.get_env(:soap, :http_opts) || []
 end

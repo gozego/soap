@@ -14,12 +14,21 @@ def deps do
   [{:soap, "~> 0.1.1"}]
 end
 ```
+
 2) Add `soap` to the list of application dependencies
 
 ```elixir
 def application do
   [applications: [:logger, :soap]]
 end
+```
+
+3) Add configuration:
+
+```elixir
+config :soap, :globals, version: "1.1"
+
+config :soap, http_opts: [recv_timeout: 20_000, timeout: 20_000]
 ```
 
 ## Usage
