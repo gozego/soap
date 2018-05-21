@@ -4,6 +4,8 @@ defmodule Soap.Request do
   """
   alias Soap.Request.Params
 
+  require Logger
+
   @doc """
   Executing with parsed wsdl and headers with body map.
   Calling HTTPoison request by Map with method, url, body, headers, options keys.
@@ -13,6 +15,10 @@ defmodule Soap.Request do
     url = Params.get_url(wsdl)
     headers = Params.build_headers(wsdl, operation, headers)
     body = Params.build_body(wsdl, operation, params)
+
+    Logger.debug fn ->
+      "Calling url: #{url} with headers: #{inspect headers} and body: #{inspect body}"
+    end
 
     HTTPoison.post(url, body, headers, http_opts())
   end
