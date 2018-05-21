@@ -17,7 +17,7 @@ defmodule Soap.Request do
     body = Params.build_body(wsdl, operation, params)
 
     Logger.debug fn ->
-      "Calling url: #{url} with headers: #{inspect headers} and body: #{inspect body}"
+      "Calling url: #{url}\nwith headers: #{inspect headers}\nand body: #{inspect body}"
     end
 
     HTTPoison.post(url, body, headers, http_opts())
