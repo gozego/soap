@@ -38,13 +38,13 @@ defmodule Soap.Request.Params do
   Returns xml-like string.
   """
 
-  @spec build_body(wsdl :: map(), operation :: String.t() | atom(), params :: map()) :: String.t()
-  def build_body(wsdl, operation, params) do
+  @spec build_body(wsdl :: map(), operation :: String.t() | atom(), params :: map(), body_headers :: map()) :: String.t()
+  def build_body(wsdl, operation, params, body_headers) do
     params
     |> construct_xml_request_body
     |> add_action_tag_wrapper(wsdl, operation)
     |> add_body_tag_wrapper
-    |> add_envelope_tag_wrapper(wsdl, operation)
+    |> add_envelope_tag_wrapper(wsdl, operation, body_headers)
     |> document()
     |> generate()
     |> String.replace(["\n", "\t"], "")
@@ -123,15 +123,22 @@ defmodule Soap.Request.Params do
   @spec add_body_tag_wrapper(list()) :: list()
   defp add_body_tag_wrapper(body), do: [element(:"#{env_namespace()}:Body", nil, body)]
 
-  @spec add_envelope_tag_wrapper(body :: any(), wsdl :: map(), operation :: String.t()) :: any()
-  defp add_envelope_tag_wrapper(body, wsdl, operation) do
+  @spec add_envelope_tag_wrapper(body :: any(), wsdl :: map(), operation :: String.t(), body_headers :: map()) :: any()
+  defp add_envelope_tag_wrapper(body, wsdl, operation, body_headers) do
     envelop_attributes =
       @schema_types
       |> Map.merge(build_soap_version_attribute())
       |> Map.merge(build_action_attribute(wsdl, operation))
       |> Map.merge(custom_namespaces())
 
-    [element(:"#{env_namespace()}:Envelope", envelop_attributes, body)]
+    body_attribute =
+      if map_size(body_headers) > 0 do
+        [build_soap_body_header(body_headers), body]
+      else
+        body
+      end
+
+    [element(:"#{env_namespace()}:Envelope", envelop_attributes, body_attribute)]
   end
 
   @spec build_soap_version_attribute() :: map()
@@ -156,6 +163,11 @@ defmodule Soap.Request.Params do
   @spec extract_soap_action_by_operation(map(), String.t()) :: String.t()
   defp extract_soap_action_by_operation(wsdl, operation) do
     Enum.find(wsdl[:operations], fn x -> x[:name] == operation end)[:soap_action]
+  end
+
+  @spec build_soap_body_header(body_headers :: map()) :: any()
+  defp build_soap_body_header(body_headers) do
+    [element(:"#{env_namespace()}:Header", nil, construct_xml_request_body(body_headers))]
   end
 
   defp soap_version, do: Application.fetch_env!(:soap, :globals)[:version]

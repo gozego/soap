@@ -33,11 +33,11 @@ defmodule Soap do
   - `params`: Parameters for build the body of a XML request.
   - `headers`: Custom request headers.
   """
-  @spec call(map(), String.t(), map(), any()) :: any()
-  def call(wsdl, operation, params, headers \\ []) do
+  @spec call(map(), String.t(), map(), map(), any()) :: any()
+  def call(wsdl, operation, params, body_headers \\ %{}, headers \\ []) do
     wsdl
     |> validate_operation(operation)
-    |> Request.call(operation, params, headers)
+    |> Request.call(operation, params, body_headers, headers)
     |> handle_response
   end
 

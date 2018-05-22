@@ -10,11 +10,11 @@ defmodule Soap.Request do
   Executing with parsed wsdl and headers with body map.
   Calling HTTPoison request by Map with method, url, body, headers, options keys.
   """
-  @spec call(wsdl :: map(), operation :: String.t(), params :: any(), headers :: any()) :: any()
-  def call(wsdl, operation, params, headers \\ []) do
+  @spec call(wsdl :: map(), operation :: String.t(), params :: any(), body_headers :: map(), headers :: any()) :: any()
+  def call(wsdl, operation, params, body_headers, headers \\ []) do
     url = Params.get_url(wsdl)
     headers = Params.build_headers(wsdl, operation, headers)
-    body = Params.build_body(wsdl, operation, params)
+    body = Params.build_body(wsdl, operation, params, body_headers)
 
     Logger.debug fn ->
       "Calling url: #{url}\nwith headers: #{inspect headers}\nand body: #{inspect body}"
