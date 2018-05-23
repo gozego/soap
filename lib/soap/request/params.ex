@@ -4,6 +4,8 @@ defmodule Soap.Request.Params do
   """
   import XmlBuilder, only: [element: 3, document: 1, generate: 1]
 
+  @type body_header :: map() | tuple()
+
   @schema_types %{
     "xmlns:xsd" => "http://www.w3.org/2001/XMLSchema",
     "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance"
@@ -38,7 +40,7 @@ defmodule Soap.Request.Params do
   Returns xml-like string.
   """
 
-  @spec build_body(wsdl :: map(), operation :: String.t() | atom(), params :: map(), body_headers :: map()) :: String.t()
+  @spec build_body(wsdl :: map(), operation :: String.t() | atom(), params :: map(), body_headers :: body_header()) :: String.t()
   def build_body(wsdl, operation, params, body_headers) do
     params
     |> construct_xml_request_body
@@ -123,7 +125,7 @@ defmodule Soap.Request.Params do
   @spec add_body_tag_wrapper(list()) :: list()
   defp add_body_tag_wrapper(body), do: [element(:"#{env_namespace()}:Body", nil, body)]
 
-  @spec add_envelope_tag_wrapper(body :: any(), wsdl :: map(), operation :: String.t(), body_headers :: map()) :: any()
+  @spec add_envelope_tag_wrapper(body :: any(), wsdl :: map(), operation :: String.t(), body_headers :: body_header()) :: any()
   defp add_envelope_tag_wrapper(body, wsdl, operation, body_headers) do
     envelop_attributes =
       @schema_types
@@ -132,10 +134,9 @@ defmodule Soap.Request.Params do
       |> Map.merge(custom_namespaces())
 
     body_attribute =
-      if map_size(body_headers) > 0 do
-        [build_soap_body_header(body_headers), body]
-      else
-        body
+      case build_soap_body_header(body_headers) do
+        :error -> body
+        header -> [header, body]
       end
 
     [element(:"#{env_namespace()}:Envelope", envelop_attributes, body_attribute)]
@@ -166,9 +167,12 @@ defmodule Soap.Request.Params do
   end
 
   @spec build_soap_body_header(body_headers :: map()) :: any()
-  defp build_soap_body_header(body_headers) do
-    [element(:"#{env_namespace()}:Header", nil, construct_xml_request_body(body_headers))]
+  defp build_soap_body_header(body_headers)
+  when (is_map(body_headers) and map_size(body_headers) > 0) or (is_tuple(body_headers) and tuple_size(body_headers) > 0) do
+    body_headers = if is_map(body_headers), do: construct_xml_request_body(body_headers), else: body_headers
+    [element(:"#{env_namespace()}:Header", nil, [body_headers])]
   end
+  defp build_soap_body_header(_), do: :error
 
   defp soap_version, do: Application.fetch_env!(:soap, :globals)[:version]
   defp env_namespace, do: Application.fetch_env!(:soap, :globals)[:env_namespace] || :env
