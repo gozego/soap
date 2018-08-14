@@ -70,7 +70,16 @@ defmodule Soap.Request.Params do
   defp construct_xml_request_body(params) when is_tuple(params) do
     params
     |> Tuple.to_list()
-    |> Enum.map(&construct_xml_request_body/1)
+    |> case do
+      [_elem1, _elem2] = list ->
+        Enum.map(list, &construct_xml_request_body/1)
+      [elem1, attrs, elem2] ->
+        List.insert_at(
+          Enum.map([elem1, elem2], &construct_xml_request_body/1),
+          1,
+          attrs
+        )
+    end
     |> insert_tag_parameters
     |> List.to_tuple()
   end
@@ -80,6 +89,7 @@ defmodule Soap.Request.Params do
   defp construct_xml_request_body(params) when is_binary(params), do: params
 
   @spec insert_tag_parameters(params :: list()) :: list()
+  defp insert_tag_parameters(params) when is_list(params) and length(params) === 3, do: params
   defp insert_tag_parameters(params) when is_list(params), do: params |> List.insert_at(1, nil)
 
   @spec add_action_tag_wrapper(list(), map(), String.t()) :: list()
