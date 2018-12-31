@@ -69,6 +69,10 @@ defmodule Soap do
     {:error, reason}
   end
 
+  def term_to_xml(term) do
+    Soap.Request.Params.construct_xml_request_body(term)
+  end
+
   defp validate_operation(wsdl, operation) do
     case valid_operation?(wsdl, operation) do
       false -> raise OperationError, operation
