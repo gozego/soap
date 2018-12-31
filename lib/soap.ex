@@ -70,7 +70,9 @@ defmodule Soap do
   end
 
   def term_to_xml(term) do
-    Soap.Request.Params.construct_xml_request_body(term)
+    term
+    |> Soap.Request.Params.construct_xml_request_body()
+    |> XmlBuilder.generate()
   end
 
   defp validate_operation(wsdl, operation) do
